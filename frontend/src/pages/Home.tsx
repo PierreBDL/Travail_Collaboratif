@@ -25,7 +25,7 @@ export default function Home() {
                                     <input type="text" placeholder="Rechercher"
                                         className={`w-full border-0 bg-transparent text-sm ${theme === "light" ? "text-slate-700 placeholder:text-slate-400" : "text-slate-100 placeholder:text-slate-400"} focus:outline-none`} />
                                 </div>
-                                <button onClick={toggleTheme} className={`flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-xl border shadow-sm transition hover:-translate-y-0.5 sm:self-auto ${theme === "dark" ? "border-slate-600 bg-slate-800 hover:bg-slate-700" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
+                                <button onClick={toggleTheme} className={`flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-xl border shadow-sm transition hover:-translate-y-0.5 sm:self-auto ${theme === "dark" ? "border-slate-600 bg-slate-200 hover:bg-slate-50" : "border-slate-200 bg-slate-100 hover:bg-slate-200"}`}>
                                     <img className="h-6 w-6" src={theme === "dark" ? sunImg : moonImg} alt="Changer de thème" />
                                 </button>
                                 <button
