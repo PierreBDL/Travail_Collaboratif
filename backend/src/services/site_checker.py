@@ -1,5 +1,3 @@
-"""Vérification ponctuelle d'un site, indépendante des routes Flask."""
-
 from datetime import datetime, timezone
 from time import perf_counter
 from typing import TypedDict
@@ -7,9 +5,7 @@ from urllib.parse import urlsplit
 
 import requests
 
-
 TIMEOUT_SECONDS = 5
-
 
 class CheckResult(TypedDict):
     url: str
@@ -26,7 +22,6 @@ def _validate_url(url: str) -> None:
     try:
         parsed = urlsplit(url)
         valid = parsed.scheme in {"http", "https"} and bool(parsed.hostname)
-        # Lire le port détecte aussi les ports invalides ou hors limites.
         parsed.port
     except ValueError as exc:
         raise ValueError("L'URL doit être une adresse HTTP ou HTTPS valide.") from exc
@@ -35,11 +30,6 @@ def _validate_url(url: str) -> None:
 
 
 def check_site(url: str) -> CheckResult:
-    """Renvoie le résultat d'un GET ; une URL invalide lève ValueError.
-
-    Le délai réseau de cinq secondes s'applique à la connexion et à la lecture.
-    Les redirections sont suivies ; seul le statut final détermine la disponibilité.
-    """
     _validate_url(url)
     result: CheckResult = {
         "url": url,
@@ -51,7 +41,6 @@ def check_site(url: str) -> CheckResult:
     }
     started_at = perf_counter()
     try:
-        # Seuls les en-têtes sont nécessaires : ne pas télécharger tout le site.
         with requests.get(
             url, timeout=TIMEOUT_SECONDS, allow_redirects=True, stream=True
         ) as response:
