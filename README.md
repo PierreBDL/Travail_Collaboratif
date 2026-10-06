@@ -4,7 +4,7 @@ Projet collaboratif de suivi de disponibilité de sites web, avec un frontend HT
 
 ## État actuel
 
-Le backend Flask expose une route de santé et un service Python de vérification ponctuelle des sites. Le stockage SQLite, les routes des moniteurs, la planification des contrôles et le dashboard seront ajoutés dans les prochaines issues.
+Le backend Flask expose une route de santé, un service Python de vérification ponctuelle des sites et un stockage SQLite des moniteurs. Les routes des moniteurs, l'historique des vérifications, la planification des contrôles et le dashboard seront ajoutés dans les prochaines issues.
 
 ## Prérequis
 
@@ -77,9 +77,43 @@ Le service accepte uniquement les URL HTTP ou HTTPS avec un hôte. Une URL inval
 
 Le délai réseau est fixé à cinq secondes pour la connexion et la lecture. Ce délai n'est pas une limite globale de cinq secondes pour toute la vérification : plusieurs redirections peuvent allonger la durée totale.
 
+## Stocker les moniteurs dans SQLite
+
+Au démarrage, Flask appelle `create_app()` et initialise automatiquement la base `backend/data/uptime.db`. Le dossier et la table `monitors` sont créés si nécessaire. Les démarrages suivants conservent les données existantes.
+
+Le chemin est défini dans `backend/src/config/settings.py` et reste indépendant du répertoire courant. SQLite est fourni avec Python : aucune dépendance supplémentaire n'est nécessaire. La base et ses fichiers auxiliaires sont exclus de Git ; chaque membre du groupe possède sa propre base locale.
+
+Un moniteur contient `id` (identifiant unique), `name`, `url` et `created_at` (date ISO 8601 en UTC). Un nom vide est refusé, les espaces en début et en fin de nom sont retirés et l'URL doit respecter la même validation HTTP/HTTPS que le service de vérification. Plusieurs moniteurs peuvent utiliser la même URL.
+
+La couche d'accès dans `backend/src/database/monitors.py` peut être utilisée sans démarrer Flask. Depuis la racine du projet, ouvrir Python :
+
+```powershell
+./backend/.venv/Scripts/python.exe
+```
+
+Puis exécuter :
+
+```python
+from backend.src.database.connection import init_database
+from backend.src.database.monitors import create_monitor, list_monitors, get_monitor, delete_monitor
+
+init_database()
+monitor = create_monitor("Exemple", "https://example.com")
+print(list_monitors())
+print(get_monitor(monitor["id"]))
+print(delete_monitor(monitor["id"]))  # True si le moniteur a été supprimé.
+print(get_monitor(monitor["id"]))     # None : il n'existe plus.
+```
+
+Sous macOS ou Linux, utiliser `./backend/.venv/bin/python`.
+
+`list_monitors()` renvoie les moniteurs par identifiant croissant. `get_monitor(id)` renvoie `None` si l'identifiant est absent ; `delete_monitor(id)` renvoie alors `False`. Un nom ou une URL invalide lève `ValueError` sans insertion. Chaque opération ferme sa connexion ; les écritures réussies sont enregistrées et une transaction en erreur est annulée.
+
+Pour utiliser une autre base, passer `db_path=chemin` à `init_database()` et aux fonctions d'accès. Pour une application Flask, utiliser `create_app({"DATABASE_PATH": chemin})`. Cette configuration permet notamment aux tests d'utiliser des bases temporaires. L'ajout d'un moniteur ne déclenche aucune vérification réseau.
+
 ## Lancer les tests du backend
 
-Les tests utilisent `unittest`, fourni avec Python, et simulent les réponses HTTP. Ils ne nécessitent ni connexion Internet ni serveur Flask démarré.
+Les tests utilisent `unittest`, fourni avec Python, simulent les réponses HTTP et créent des bases SQLite temporaires supprimées à la fin des tests. Ils ne modifient pas `backend/data/uptime.db` et ne nécessitent ni connexion Internet ni serveur Flask démarré.
 
 Sous Windows, après installation des dépendances :
 

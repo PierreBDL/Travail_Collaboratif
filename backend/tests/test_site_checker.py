@@ -1,10 +1,12 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import requests
 
-from backend.src.app import app
+from backend.src.app import create_app
 from backend.src.services.site_checker import check_site
 
 
@@ -85,8 +87,10 @@ class SiteCheckerTests(unittest.TestCase):
         self.assertEqual(result["response_time_ms"], 125.0)
 
     def test_health_route_still_works(self):
-        with app.test_client() as client:
-            response = client.get("/api/health")
+        with TemporaryDirectory() as directory:
+            app = create_app({"TESTING": True, "DATABASE_PATH": Path(directory) / "test.db"})
+            with app.test_client() as client:
+                response = client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), {"status": "ok"})
         self.get.assert_not_called()
