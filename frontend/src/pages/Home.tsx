@@ -12,10 +12,10 @@ export default function Home() {
     const { theme, toggleTheme } = useTheme()
 
     return (
-        <div className={`min-h-screen min-w-full antialiased ${theme === "dark" ? "bg-slate-800 text-slate-100" : "bg-white text-slate-800"}`}>
+        <div className={`min-h-screen min-w-full antialiased ${theme === "dark" ? "bg-gray-800 text-slate-100" : "bg-[#F6F7FB] text-slate-800"}`}>
             <div className="min-h-screen max-w-full">
                 <div className="mx-auto min-h-[calc(100vh-2rem)] w-full">
-                    <div className={`flex min-h-[calc(100vh-2rem)] flex-col ${theme === "dark" ? "bg-slate-800 text-slate-100" : "bg-white text-slate-800"}`}>
+                    <div className={`flex min-h-[calc(100vh-2rem)] flex-col ${theme === "dark" ? "bg-[#080708] text-slate-100" : "bg-white text-slate-800"}`}>
                         <header className="mb-8 flex min-h-30 items-center justify-between bg-[#5865F2] px-6 py-4 shadow-sm sm:px-8">
                             <h1 className="flex justify-self-center place-self-center text-xl font-bold tracking-tight text-white sm:text-2xl">Uptime Monitor</h1>
                             <button onClick={toggleTheme} className="flex h-11 w-11 items-center justify-center right-5 rounded-xl border border-white/30 bg-white/10 transition hover:bg-white/20">
