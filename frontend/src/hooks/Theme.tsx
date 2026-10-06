@@ -10,7 +10,7 @@ interface themeValues {
 const themeContext = createContext<themeValues | undefined>(undefined)
 
 export function ThemeProvider ({children}: {children: React.ReactNode}) {
-    const [theme, setTheme] = useState<themeValuesPossible>("light")
+    const [theme, setTheme] = useState<themeValuesPossible>("dark")
 
     function toggleTheme () {
         setTheme(theme === "dark" ? "light" : "dark")
