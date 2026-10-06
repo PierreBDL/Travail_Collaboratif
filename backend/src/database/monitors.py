@@ -1,5 +1,3 @@
-"""Accès aux moniteurs, indépendant de Flask et des requêtes réseau."""
-
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TypedDict

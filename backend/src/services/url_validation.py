@@ -1,10 +1,7 @@
-"""Validation commune des URL des sites surveillés."""
-
 from urllib.parse import urlsplit
 
 
 def validate_url(url: str) -> None:
-    """Lève ValueError pour une URL sans protocole HTTP(S) ou sans hôte."""
     if not isinstance(url, str) or not url or any(char.isspace() for char in url):
         raise ValueError("L'URL doit être une adresse HTTP ou HTTPS valide.")
     try:
