@@ -8,3 +8,7 @@ __pycache__/
 !.env.example
 backend/data/*.db
 backend/data/*.db-*
+
+
+# Front
+#frontend/node_modules/*
