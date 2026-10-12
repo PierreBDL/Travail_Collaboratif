@@ -4,7 +4,7 @@ Projet collaboratif de suivi de disponibilité de sites web, avec un frontend HT
 
 ## État actuel
 
-Le backend Flask expose une route de santé, un service Python de vérification ponctuelle des sites et un stockage SQLite des moniteurs. Les routes des moniteurs, l'historique des vérifications, la planification des contrôles et le dashboard seront ajoutés dans les prochaines issues.
+Le backend Flask expose une route de santé, un service Python de vérification ponctuelle des sites, un stockage SQLite des moniteurs et une API de vérification avec historique. Les routes de gestion des moniteurs et la planification des contrôles restent à ajouter.
 
 ## Prérequis
 
@@ -110,6 +110,43 @@ Sous macOS ou Linux, utiliser `./backend/.venv/bin/python`.
 `list_monitors()` renvoie les moniteurs par identifiant croissant. `get_monitor(id)` renvoie `None` si l'identifiant est absent ; `delete_monitor(id)` renvoie alors `False`. Un nom ou une URL invalide lève `ValueError` sans insertion. Chaque opération ferme sa connexion ; les écritures réussies sont enregistrées et une transaction en erreur est annulée.
 
 Pour utiliser une autre base, passer `db_path=chemin` à `init_database()` et aux fonctions d'accès. Pour une application Flask, utiliser `create_app({"DATABASE_PATH": chemin})`. Cette configuration permet notamment aux tests d'utiliser des bases temporaires. L'ajout d'un moniteur ne déclenche aucune vérification réseau.
+
+## API de disponibilité d'un site
+
+`POST /api/health` accepte un corps JSON avec `Content-Type: application/json` :
+
+```json
+{"website": "https://example.com"}
+```
+
+Exemple PowerShell :
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:5000/api/health -ContentType application/json -Body '{"website":"https://example.com"}'
+```
+
+Exemple de réponse HTTP 200 :
+
+```json
+{
+  "state": "uptime",
+  "name": "example.com",
+  "link": "https://example.com",
+  "responseTime": 180,
+  "disponibilityRate": 100,
+  "lastdays": [{"date": "2026-10-12", "state": "uptime"}]
+}
+```
+
+`name` utilise le premier moniteur enregistré pour cette URL (par identifiant), sinon le nom d'hôte. `image` est omis et reste géré par le frontend. `responseTime` est exprimé en millisecondes, même en cas d'échec.
+
+Chaque appel enregistre le résultat dans la table SQLite `checks`, créée automatiquement sans effacer les données existantes. L'historique est associé à l'URL exacte demandée, indépendamment des moniteurs, et persiste après un redémarrage.
+
+`disponibilityRate` est le pourcentage de contrôles réussis, arrondi à deux décimales, sur les 30 jours calendaires UTC incluant aujourd'hui : de minuit il y a 29 jours jusqu'à maintenant. La vérification courante est incluse. `lastdays` est trié par date croissante ; un jour est `down` si au moins un contrôle a échoué, sinon `uptime`. Les jours sans contrôle sont omis. Au premier appel, le taux est 100 ou 0 et seul le jour courant apparaît. Les contrôles ne sont pas encore planifiés automatiquement.
+
+Un site inaccessible, un timeout ou un code HTTP hors de l'intervalle 200–399 renvoie HTTP 200 avec `state: "down"`. Un corps JSON mal formé, un champ `website` absent ou une URL invalide renvoie HTTP 400. Un Content-Type non JSON renvoie HTTP 415. Ces erreurs de requête renvoient `{"error": "message explicite"}` sans effectuer de contrôle réseau ni enregistrer de résultat.
+
+`GET /api/health` conserve sa réponse `{"status": "ok"}` et ne vérifie aucun site.
 
 ## Lancer les tests du backend
 
