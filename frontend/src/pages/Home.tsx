@@ -1,13 +1,40 @@
-import searchImg from '../assets/rechercher.png'
+import { useEffect, useState } from 'react'
+import BackendStatus from '../components/BackendStatus'
+import { checkWebsite } from '../services/api'
 import sunImg from '../assets/soleil.png'
 import moonImg from '../assets/lune.png'
 
 import Card from '../components/Card'
 import { useTheme } from '../hooks/Theme'
-import { data } from '../data/WebsiteData'
+import { data, type websiteData } from '../data/WebsiteData'
 
 export default function Home() {
 
+    const [results, setResults] = useState<Record<string, { data?: websiteData; error?: string }>>({})
+    const [loading, setLoading] = useState(true)
+    const [attempt, setAttempt] = useState(0)
+
+    useEffect(() => {
+        let active = true
+        const controllers = data.map(() => new AbortController())
+        async function loadSites() {
+            await Promise.all(data.map(async (site, index) => {
+                const controller = controllers[index]
+                const timeout = window.setTimeout(() => controller.abort(), 60000)
+                try {
+                    const result = await checkWebsite(site.link, controller.signal)
+                    if (active) setResults(previous => ({ ...previous, [site.link]: { data: result } }))
+                } catch (error) {
+                    if (active) setResults(previous => ({ ...previous, [site.link]: { error: controller.signal.aborted
+                        ? 'Le contrôle a dépassé le délai prévu.'
+                        : error instanceof Error ? error.message : 'Connexion impossible.' } }))
+                } finally { window.clearTimeout(timeout) }
+            }))
+            if (active) setLoading(false)
+        }
+        void loadSites()
+        return () => { active = false; controllers.forEach(controller => controller.abort()) }
+    }, [attempt])
     // Hook Theme
     const { theme, toggleTheme } = useTheme()
 
@@ -28,14 +55,24 @@ export default function Home() {
                                 <div className="flex flex-row justify-center flex-wrap gap-4">
                                     {
                                         data.map(website => (
-                                            <Card data={website}></Card>
+                                            <div key={website.link} className="w-full max-w-300">
+                                                {results[website.link]?.data ? (
+                                                    <Card data={results[website.link].data!} />
+                                                ) : (
+                                                    <div className="rounded-[18px] border border-slate-400 p-4" role="status">
+                                                        <h2 className="font-semibold">{website.name}</h2>
+                                                        <p>{results[website.link]?.error || 'Vérification du site en cours…'}</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))
                                     }
                                 </div>
                             </div>
-                            <button
-                                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-500">
-                                ＋ Ajouter un site
+                            <button type="button" disabled={loading}
+                                onClick={() => { setLoading(true); setResults({}); setAttempt(value => value + 1) }}
+                                className="my-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                                {loading ? 'Vérification en cours…' : 'Actualiser les sites'}
                             </button>
                         </main>
 
