@@ -48,3 +48,12 @@ def delete_monitor(monitor_id: int, db_path: str | Path = DATABASE_PATH) -> bool
     with connect_database(db_path) as connection:
         cursor = connection.execute("DELETE FROM monitors WHERE id = ?", (monitor_id,))
         return cursor.rowcount > 0
+
+
+def get_monitor_by_url(url: str, db_path: str | Path = DATABASE_PATH) -> Monitor | None:
+    with connect_database(db_path) as connection:
+        row = connection.execute(
+            "SELECT id, name, url, created_at FROM monitors WHERE url = ? ORDER BY id ASC LIMIT 1",
+            (url,),
+        ).fetchone()
+        return dict(row) if row is not None else None
