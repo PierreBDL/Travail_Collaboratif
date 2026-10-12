@@ -28,3 +28,17 @@ def init_database(db_path: str | Path = DATABASE_PATH) -> None:
                 created_at TEXT NOT NULL
             )
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS checks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+                available INTEGER NOT NULL CHECK (available IN (0, 1)),
+                status_code INTEGER,
+                response_time_ms REAL NOT NULL,
+                checked_at TEXT NOT NULL,
+                error TEXT
+            )
+        """)
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS checks_url_date ON checks (url, checked_at)"
+        )
